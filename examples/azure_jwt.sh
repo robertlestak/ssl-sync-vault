@@ -18,7 +18,7 @@ JWT_ACCESS_TOKEN=$(curl -X POST \
 	-d "client_id=$CLIENT_ID&scope=$SCOPE&client_secret=$CLIENT_SECRET&grant_type=client_credentials" | jq -r '.access_token')
 
 # create a vault token using the JWT token
-VAULT_TOKEN=$(curl -X POST -d "{\"jwt\": \"$JWT_ACCESS_TOKEN\", \"role\": \"$ROLE_NAME\"}" \
+export VAULT_TOKEN=$(curl -X POST -d "{\"jwt\": \"$JWT_ACCESS_TOKEN\", \"role\": \"$ROLE_NAME\"}" \
 	$VAULT_ADDR/v1/auth/$CLIENT_NAME/login | jq -r '.auth.client_token')
 
 # sync the certificate from vault, and restart nginx when the cert is renewed
