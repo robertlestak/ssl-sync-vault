@@ -16,6 +16,9 @@ import (
 
 type SyncConfig struct {
 	VaultKVPath         string
+	VaultCertField      string
+	VaultKeyField       string
+	VaultChainField     string
 	VaultAddr           string
 	FilePathFullChain   string
 	FilePathKey         string
@@ -156,17 +159,20 @@ func (s *SyncConfig) readCertData(cert map[string]interface{}) error {
 	var keyB64 string
 	var chainB64 string
 	var ok bool
-	certB64, ok = cert["certificate"].(string)
+	if s.VaultCertField == "" {
+		l.Error("no cert field")
+		return errors.New("no cert field")
+	}
+	if s.VaultKeyField == "" {
+		l.Error("no key field")
+		return errors.New("no key field")
+	}
+	certB64, ok = cert[s.VaultCertField].(string)
 	if !ok {
 		l.Error("error: certificate not found")
 		return errors.New("certificate not found")
 	}
-	chainB64, ok = cert["chain"].(string)
-	if !ok {
-		l.Error("error: chain not found")
-		return errors.New("chain not found")
-	}
-	keyB64, ok = cert["key"].(string)
+	keyB64, ok = cert[s.VaultKeyField].(string)
 	if !ok {
 		l.Error("error: key not found")
 		return errors.New("key not found")
@@ -177,18 +183,25 @@ func (s *SyncConfig) readCertData(cert map[string]interface{}) error {
 		l.Errorf("error: %v", err)
 		return err
 	}
-	chainBytes, err := base64.StdEncoding.DecodeString(chainB64)
-	if err != nil {
-		l.Errorf("error: %v", err)
-		return err
-	}
 	keyBytes, err := base64.StdEncoding.DecodeString(keyB64)
 	if err != nil {
 		l.Errorf("error: %v", err)
 		return err
 	}
-	// set the contents of the files
-	s.FullChainContents = string(certBytes) + string(chainBytes)
+	s.FullChainContents = string(certBytes)
+	if s.VaultChainField != "" {
+		chainB64, ok = cert[s.VaultChainField].(string)
+		if !ok {
+			l.Error("error: chain not found")
+			return errors.New("chain not found")
+		}
+		chainBytes, err := base64.StdEncoding.DecodeString(chainB64)
+		if err != nil {
+			l.Errorf("error: %v", err)
+			return err
+		}
+		s.FullChainContents = s.FullChainContents + string(chainBytes)
+	}
 	s.KeyContents = string(keyBytes)
 	return nil
 }
@@ -252,6 +265,15 @@ func (s *SyncConfig) envConfig() {
 	if os.Getenv("SYNC_COMPLETE_COMMAND") != "" {
 		s.SyncCompleteCommand = os.Getenv("SYNC_COMPLETE_COMMAND")
 	}
+	if os.Getenv("VAULT_CERT_FIELD") != "" {
+		s.VaultCertField = os.Getenv("VAULT_CERT_FIELD")
+	}
+	if os.Getenv("VAULT_CHAIN_FIELD") != "" {
+		s.VaultChainField = os.Getenv("VAULT_CHAIN_FIELD")
+	}
+	if os.Getenv("VAULT_KEY_FIELD") != "" {
+		s.VaultKeyField = os.Getenv("VAULT_KEY_FIELD")
+	}
 }
 
 func init() {
@@ -272,6 +294,9 @@ func main() {
 	flag.StringVar(&sc.FilePathFullChain, "fullchain", "", "full chain file path")
 	flag.StringVar(&sc.FilePathKey, "key", "", "key file path")
 	flag.StringVar(&sc.SyncCompleteCommand, "complete-cmd", "", "command to run when sync is complete")
+	flag.StringVar(&sc.VaultCertField, "vault-cert-field", "", "vault cert field")
+	flag.StringVar(&sc.VaultKeyField, "vault-key-field", "", "vault key field")
+	flag.StringVar(&sc.VaultChainField, "vault-chain-field", "", "vault chain field")
 	flag.Parse()
 
 	if sc.VaultKVPath == "" {

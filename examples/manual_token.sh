@@ -9,6 +9,9 @@ export VAULT_TOKEN
 # sync the certificate from vault, and restart nginx when the cert is renewed
 sslsync \
 	-vault-path kv-name/path/to/value \
+	-vault-cert-field certificate \
+	-vault-chain-field chain \
+	-vault-key-field key \
 	-fullchain /etc/nginx/certs/certchain.pem \
 	-key /etc/nginx/certs/certkey.pem \
 	-complete-cmd "service nginx reload"

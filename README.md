@@ -23,14 +23,20 @@ You can either use environment variables (see `.env-sample`) or command line fla
 ### Flags
 
 ```bash
--complete-cmd string
-        command to run when sync is complete
+  -complete-cmd string
+    	command to run when sync is complete
   -fullchain string
-        full chain file path
+    	full chain file path
   -key string
-        key file path
+    	key file path
+  -vault-cert-field string
+    	vault cert field
+  -vault-chain-field string
+    	vault chain field
+  -vault-key-field string
+    	vault key field
   -vault-path string
-        vault kv path
+    	vault kv path
 ```
 
 ### Scheduling
